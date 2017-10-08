@@ -1,0 +1,18 @@
+Servidor UsbCoin
+=================
+
+EJECUCION
+----------
+    Para poner en funcionamiento el servidor se debe tener instalado node.js
+    y npm, y ejecutar:
+        npm install // instala las dependencias del proyecto
+y luego:
+        node iniciar.js // inicia el servidor
+
+CONSIDERACIONES
+-----------------
+
+- Al ser un servidor http se puede ingresar por el navegador, para pruebas
+se crearon htmls simples que permiten ver el funcionamiento basico del servidor,
+sin embargo estos campos no tienen chequeos por lo cual pueden producir un error
+en el servidor si se ingresan campos inválidos.
