@@ -61,6 +61,7 @@ manejador["/resumenReportes"] = manejadorSolicitudes.resumenReportes;
 manejador["/resumenReportesAsesor"] = manejadorSolicitudes.resumenReportesAsesor;
 manejador["/resumenReportesCliente"] = manejadorSolicitudes.resumenReportesCliente;
 manejador["/index"] = manejadorSolicitudes.login;
+manejador["/cambioClave"] = manejadorSolicitudes.cambioClave;
 
 baseDatos.iniciar();
 moment.locale('es');

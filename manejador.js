@@ -144,7 +144,7 @@ function index(respuesta,data) {
                                     "<br>"+
                                 '<input type="submit" value="LISTA REPORTES" />'+
                                     "</form>" +
-                                '<form action="/reportesAsesor">'+    
+                                '<form action="/resumenReportes">'+    
                                     "<br>"+
                                 '<input type="submit" value="DESCARGAR RESUMEN REPORTES" />'+
                                     "</form>"+
@@ -1084,9 +1084,25 @@ function subirEditarReporte(respuesta,data) {
                                     respuesta.end();
                                 }
                                 else {
-                                    console.log("Reporte Actualizado");
-                                    respuesta.write("Reporte Actualizado\n");
-                                    respuesta.end();
+                                    console.log("Reporte Actualizado Faltan actividades");
+                                    var actualizar2 = "UPDATE Actividades SET dia = ?,mes = ?,anio = ?"+
+                        " WHERE asesor = ? " +
+                        "AND cliente = ? AND dia = ? AND mes = ? AND anio = ?";
+                                db.run(actualizar2,[diaN,mesN,anioN,asesor,cliente,dia,mes,anio],
+                                function(error){
+                                    if (error){
+                                        console.log(error);
+                                        console.log("Error registro actividad");
+                                        respuesta.write("Error: Problemas registro actividad"+ "\n");
+                                        respuesta.end();
+                                    }
+                                    else {
+                                        // Si es exitoso editamos reporte
+                                        console.log("Reporte Actualizado");
+                                        respuesta.write("Reporte Actualizado\n");
+                                        respuesta.end();
+                                    }
+                                });
                                 }});
                         }
                         });
@@ -1331,6 +1347,7 @@ function subirVerActividad(respuesta,data) {
                         }              
                         console.log("Cantidad de Reportes "+ num);
                         console.log(lista);
+                        respuesta.writeHead(200, {"Content-Type": "text/plain; charset=utf-8"});
                         respuesta.write("Cantidad de Reportes|"+ num.toString() 
                         +"\n");
                         respuesta.write(lista);            
@@ -1592,8 +1609,16 @@ function subirEliminarBaseDatos(respuesta,data) {
     if (clave == "ag1603" || mes == undefined || mes > 12 || mes < 1) {
         
     var msj = "ACTUALIZAR HISTORICO MES " + mes + "\n";
-    
     console.log(msj);
+    msj = msj + "Se necesitan 2 archivos:\n" +
+    "\n- anterior.db : Adjunto al correo, se envía cuando se cierra el mes\n" +
+    "\n- historicoBaseDatos.db : Histórico actual, se descarga desde la página en el siguiente link https://controleshls.herokuapp.com/historicoBaseDatos.db\n\n\n" + 
+    "Ingresar en la máquina virtual\n\n" +
+    "https://ide.c9.io/androidegris/hlscontroles\n\n" +
+    "usuario: androidegris\n" +
+    "contraseña: controleshls123\n\n" +
+    "En la máquina virtual debe subir a la carpeta actualizar_mes los archivos anterior.db y historicoBaseDatos.db (Se arrastran a la carpeta o se usa el menú File -Upload Local Files)\n" +
+    "Luego de subidos los archivos realizar los pasos indicados en Leeme.txt de la máquina virtual";
     var email   = require("emailjs");
     var server 	= email.server.connect({
             user:	"mispeliculasnode@yahoo.com", 
@@ -1605,12 +1630,12 @@ function subirEliminarBaseDatos(respuesta,data) {
  
     var message	= {
             text:	msj, 
-            from:	"Web Mis Peliculas <mispeliculasnode@yahoo.com>", 
-            to:		"Andres <usbandroidex@gmail.com>",
+            from:	"Controles HLS <mispeliculasnode@yahoo.com>", 
+            to:		"Andres <usbandroidex@gmail.com>, Andres P. <aguzman@grupohl.org>, Javier Lattuf <javierlattuf@gmail.com>",
             subject:	"[Reportes HLS]",
             attachment: 
             [
-                {path:"controles.db", type:"application/x-sqlite3", name:"historico.db"}
+                {path:"controles.db", type:"application/x-sqlite3", name:"anterior.db"}
             ]
     };
  
@@ -2521,6 +2546,56 @@ function resumenReportesCliente(respuesta,data) {
         console.log(err);
     }
 }
+
+// Procesa intento de cambio clave
+function cambioClave(respuesta,data) {
+    console.log("Manipulador de petición 'cambio clave' ha sido llamado.");
+    var usuario = querystring.parse(data)["user"];
+    var clave = querystring.parse(data)["password"];
+    var codigo = querystring.parse(data)["codigo"];
+    // Respuesta Web
+    // respuesta.writeHead(200, {"Content-Type": "text/html"});
+    var sqlite3 = require('sqlite3').verbose();
+    var db = new sqlite3.Database(file);
+    if (codigo != "hls1603") {
+        console.log("Error Codigo");
+        respuesta.write("Error Codigo" + "\n");
+        respuesta.end();
+        db.close();
+    }
+    else {
+         var actualizar = "UPDATE Asesores SET password = ?"+
+                        " WHERE user = ?";
+    try {
+        //Encriptamos clave
+        bcrypt.hash(clave, null,null, function(err, hash) {
+        db.run(actualizar,[hash,usuario],
+            function(error){
+                if (error){
+                    console.log(error);
+                    console.log("Error en cambio clave");
+                    respuesta.write("Error: En cambio clave" + "\n");    
+                    respuesta.end();
+                    db.close();
+                }
+                else{
+                    console.log("Cambio Exitoso");
+                    respuesta.write("Cambio Exitoso" + "\n");
+                    console.log("Cambiada clave asesor " + usuario);
+                    respuesta.end();
+                    db.close();
+                }
+            });
+        
+        });
+    } catch (err) {
+        // manejamos error
+        console.log(err);  
+    }
+    }
+}
+
+exports.cambioClave = cambioClave;
 
 
 exports.resumenReportesAsesor = resumenReportesAsesor;
